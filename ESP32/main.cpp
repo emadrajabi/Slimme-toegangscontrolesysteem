@@ -16,15 +16,19 @@
 #define GREEN_PIN D3
 #define BUZZER_PIN 13
 #define SERVO_PIN 2
-#define DOOR_LED_PIN 12 // <-- CORRECTIE: Veranderd van D13 om conflict met buzzer te voorkomen
+#define DOOR_LED_PIN 12
 
 // 🌐 WiFi + Firebase instellingen
 const char* ssid = "***********";
-const char* password = "***********";
-const char* firebaseApiKey = "***********"; 
-const char* projectId = "*****************";                         
+const char* password = "***************";
+const char* firebaseApiKey = "**************";
+const char* projectId = "***************";
 const char* collPersoneel = "****************";
-const char* collLog = "****************";
+const char* collLog = "*****************";
+
+// --- AANPASSING START: Definieer de specifieke afdeling voor deze ESP32 ---
+const char* AFDELING_NAAM = "IT";
+// --- AANPASSING EINDE ---
 
 // ⏰ Tijd
 const long gmtOffset = 3600;      // 1 uur (voor CET)
@@ -34,7 +38,7 @@ const int daylightOffset = 3600;  // 1 uur voor zomertijd (CEST)
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0);
 
 // 🔐 RFID & Admin
-const char* MY_ADMIN_UID = "*********"; // <-- CORRECTIE: Naam veranderd om conflict te voorkomen 
+const char* MY_ADMIN_UID = "*********"; 
 Adafruit_PN532 nfc(SDA_PIN, SCL_PIN);
 
 // ⚙️ Servo
@@ -45,11 +49,11 @@ String laatstGescandeUID = "";      // Voor RFID anti-dubbelscan
 
 // --- Timers voor non-blocking operaties ---
 unsigned long lastRfidScanTime = 0;
-const long rfidScanInterval = 500; // Hoe vaak we de RFID-lezer checken (ms)
+const long rfidScanInterval = 500;
 unsigned long lastDisplayClearTime = 0;
-const long displayMessageDuration = 1500; // Hoe lang een boodschap op het scherm blijft staan (ms)
+const long displayMessageDuration = 1500;
 unsigned long doorOpenStartTime = 0;
-const long doorOpenDuration = 5000; // Hoe lang de deur open blijft (ms)
+const long doorOpenDuration = 5000;
 
 // --- RFID State Machine ---
 enum RfidState {
@@ -69,7 +73,7 @@ void connectWiFi() {
   Serial.println(ssid);
   WiFi.begin(ssid, password);
   unsigned long startTime = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - startTime < 30000) { // Max 30 sec wachten
+  while (WiFi.status() != WL_CONNECTED && millis() - startTime < 30000) {
     delay(500);
     Serial.print(".");
   }
@@ -79,7 +83,7 @@ void connectWiFi() {
     Serial.println(WiFi.localIP());
   } else {
     Serial.println("\n❌ WiFi verbinding MISLUKT!");
-    showOLED("WiFi Fout!", "Admin werkt"); // Aangepaste boodschap
+    showOLED("WiFi Fout!", "Admin werkt");
   }
 }
 
@@ -92,7 +96,7 @@ void setupTime() {
   Serial.println("Synchroniseren van tijd...");
   configTime(gmtOffset, daylightOffset, "pool.ntp.org", "time.nist.gov");
   unsigned long startTime = millis();
-  while (time(nullptr) < 100000 && millis() - startTime < 10000) { // Max 10 seconden wachten
+  while (time(nullptr) < 100000 && millis() - startTime < 10000) {
     delay(500);
     Serial.print("*");
   }
@@ -106,7 +110,7 @@ void setupTime() {
 
 String getTijd() {
   if (WiFi.status() != WL_CONNECTED) {
-    return "N/A (offline)"; // Geef een offline indicatie terug
+    return "N/A (offline)";
   }
   time_t now = time(nullptr);
   struct tm* tijd = localtime(&now);
@@ -118,12 +122,12 @@ String getTijd() {
 // ⚙️ Servo bedienen: deur openen
 void openDeur() {
   Serial.println("Deur wordt geopend...");
-  servo.write(180); // Open de deur (aanpassen afhankelijk van servo instelling)
-  doorOpenStartTime = millis(); // Start timer voor hoe lang de deur open blijft
-  digitalWrite(GREEN_PIN, LOW);     // Groene LED aan (Actief Laag)
-  digitalWrite(BUZZER_PIN, HIGH);   // Buzzer aan (Actief Hoog)
-  digitalWrite(DOOR_LED_PIN, HIGH); // Deur LED aan wanneer deur opent
-  delay(100); // Korte delay voor buzzergeluid
+  servo.write(180);
+  doorOpenStartTime = millis();
+  digitalWrite(GREEN_PIN, LOW);
+  digitalWrite(BUZZER_PIN, HIGH);
+  digitalWrite(DOOR_LED_PIN, HIGH);
+  delay(100);
   digitalWrite(BUZZER_PIN, LOW);
   delay(100);
   digitalWrite(BUZZER_PIN, HIGH);
@@ -134,39 +138,34 @@ void openDeur() {
 // ⚙️ Servo bedienen: deur sluiten
 void closeDeur() {
   Serial.println("Deur wordt gesloten...");
-  servo.write(0);  // Sluit de deur (terug naar beginpositie)
-  digitalWrite(GREEN_PIN, HIGH);    // Groene LED uit (Actief Laag)
-  digitalWrite(DOOR_LED_PIN, LOW);  // Deur LED uit wanneer deur sluit
+  servo.write(0);
+  digitalWrite(GREEN_PIN, HIGH);
+  digitalWrite(DOOR_LED_PIN, LOW);
 }
 
 // 📟 Tonen van tekst op een OLED-scherm
 void showOLED(String regel1, String regel2) {
   u8g2.clearBuffer();
-  u8g2.setFont(u8g2_font_ncenB14_tr); // Groter lettertype voor regel 1
+  u8g2.setFont(u8g2_font_ncenB14_tr);
   u8g2.drawStr(0, 20, regel1.c_str());
-  u8g2.setFont(u8g2_font_ncenB10_tr); // Kleiner lettertype voor regel 2
+  u8g2.setFont(u8g2_font_ncenB10_tr);
   u8g2.drawStr(0, 50, regel2.c_str());
   u8g2.sendBuffer();
-  lastDisplayClearTime = millis(); // Reset timer voor het wissen van het scherm
+  lastDisplayClearTime = millis();
 }
 
 // 📡 Communiceren met Firestore voor check van UID en logboek van pogingen
 void controleerUID(String uid) {
-  currentRfidState = RFID_PROCESSING; // Zet de status naar processing
+  currentRfidState = RFID_PROCESSING;
 
-  // =========================================================================
-  // --- EERST CONTROLEREN OP ADMIN UID ---
-  // Dit gebeurt lokaal, zonder dat er een WiFi-verbinding nodig is.
-  // =========================================================================
   if (uid.equalsIgnoreCase(MY_ADMIN_UID)) {
     Serial.println("✅ ADMIN UID gedetecteerd! Toegang lokaal verleend.");
     showOLED("Welkom", "Admin");
     openDeur();
     currentRfidState = RFID_ACCESS_GRANTED;
     
-    // Optioneel: probeer de admin-toegang alsnog te loggen als er wel WiFi is.
     if (WiFi.status() == WL_CONNECTED) {
-      Serial.println("Logboek opslaan voor Admin...");
+      // (Admin logging blijft ongewijzigd)
       HTTPClient post;
       String logUrl = "https://firestore.googleapis.com/v1/projects/" + String(projectId) + "/databases/(default)/documents/" + String(collLog) + "?key=" + firebaseApiKey;
       post.begin(logUrl);
@@ -177,7 +176,7 @@ void controleerUID(String uid) {
       logDoc["fields"]["UID"]["stringValue"] = uid;
       logDoc["fields"]["Gebruiker"]["stringValue"] = "Admin (Lokaal)";
       logDoc["fields"]["Resultaat"]["stringValue"] = "Toegang toegestaan";
-      logDoc["fields"]["Locatie"]["stringValue"] = "Kantoor";
+      logDoc["fields"]["Locatie"]["stringValue"] = AFDELING_NAAM; // Gebruik de afdeling naam
       String logBody;
       serializeJson(logDoc, logBody);
 
@@ -189,18 +188,16 @@ void controleerUID(String uid) {
       }
       post.end();
     }
-    
-    return; // BELANGRIJK: Stop de functie hier.
+    return;
   }
 
-  // De rest van de code wordt alleen uitgevoerd als het NIET de Admin UID is.
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("❌ Geen WiFi verbinding voor UID controle.");
     showOLED("Fout!", "Geen WiFi");
-    digitalWrite(RED_PIN, LOW); // Rode LED aan
+    digitalWrite(RED_PIN, LOW);
     digitalWrite(BUZZER_PIN, HIGH); delay(500); digitalWrite(BUZZER_PIN, LOW);
-    digitalWrite(RED_PIN, HIGH); // Rode LED uit
-    currentRfidState = RFID_IDLE; // Direct terug naar IDLE, probeer opnieuw
+    digitalWrite(RED_PIN, HIGH);
+    currentRfidState = RFID_IDLE;
     return;
   }
 
@@ -209,17 +206,12 @@ void controleerUID(String uid) {
   http.begin(url);
 
   Serial.print("Controleer UID: "); Serial.println(uid);
-  Serial.print("Firestore GET URL: "); Serial.println(url);
-
   int code = http.GET();
-  String naamGebruiker = "Onbekend"; // Standaardwaarde
-  String resultaat = "Toegang geweigerd";
+  String naamGebruiker = "Onbekend";
+  String resultaat = "Toegang geweigerd"; // Standaard is geweigerd
 
-  Serial.print("HTTP GET Response Code: "); Serial.println(code);
-
-  if (code == HTTP_CODE_OK) { // HTTP_CODE_OK is 200
+  if (code == HTTP_CODE_OK) {
     String res = http.getString();
-    Serial.print("Firestore Response: "); Serial.println(res);
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, res);
 
@@ -227,36 +219,67 @@ void controleerUID(String uid) {
       Serial.print("deserializeJson() mislukt: ");
       Serial.println(error.f_str());
     } else {
-      // <-- CORRECTIE: Haal 'voornaam' en 'achternaam' op en voeg ze samen.
       String voornaam = doc["fields"]["voornaam"]["stringValue"] | "";
       String achternaam = doc["fields"]["achternaam"]["stringValue"] | "";
       
       naamGebruiker = voornaam + " " + achternaam;
-      naamGebruiker.trim(); // Verwijdert eventuele spaties aan begin/einde
-
-      // Als de naam na het samenvoegen nog steeds leeg is, gebruik dan "Onbekend"
+      naamGebruiker.trim();
       if (naamGebruiker.length() == 0) {
         naamGebruiker = "Onbekend";
       }
-      // <-- EINDE CORRECTIE
       
-      resultaat = "Toegang toegestaan";
+      // --- AANPASSING START: Controleer de 'toegang_tot' array ---
+      bool heeftToegang = false;
+      // Probeer de array 'toegang_tot' uit de JSON te halen
+      JsonArray toegangsArray = doc["fields"]["toegang_tot"]["arrayValue"]["values"];
+
+      // Controleer of de array bestaat en niet leeg is
+      if (!toegangsArray.isNull()) {
+        Serial.println("Autorisaties gevonden, controleren voor " + String(AFDELING_NAAM) + "...");
+        // Loop door elke waarde in de array
+        for (JsonVariant v : toegangsArray) {
+          const char* toegangTot = v["stringValue"];
+          // Vergelijk de waarde met de naam van onze afdeling
+          if (toegangTot != nullptr && strcmp(toegangTot, AFDELING_NAAM) == 0) {
+            heeftToegang = true; // Gevonden!
+            break; // Stop met zoeken
+          }
+        }
+      } else {
+        Serial.println("Waarschuwing: veld 'toegang_tot' niet gevonden voor deze gebruiker.");
+      }
+
+      // Geef alleen toegang als de controle is geslaagd
+      if (heeftToegang) {
+        Serial.println("✅ Toegang toegestaan voor " + String(AFDELING_NAAM) + "!");
+        resultaat = "Toegang toegestaan";
+        showOLED("Toegestaan!", ("Welkom " + naamGebruiker).c_str());
+        openDeur();
+        currentRfidState = RFID_ACCESS_GRANTED;
+      } else {
+        // Dit blok wordt nu uitgevoerd als de UID bestaat, maar geen toegang heeft tot DEZE afdeling.
+        Serial.println("❌ Toegang geweigerd! Geen autorisatie voor " + String(AFDELING_NAAM) + ".");
+        resultaat = "Toegang geweigerd";
+        digitalWrite(RED_PIN, LOW);
+        digitalWrite(BUZZER_PIN, HIGH); delay(700); digitalWrite(BUZZER_PIN, LOW);
+        showOLED("Geweigerd", "Geen toegang");
+        digitalWrite(RED_PIN, HIGH);
+        currentRfidState = RFID_ACCESS_DENIED;
+      }
+      // --- AANPASSING EINDE ---
     }
-    Serial.println("✅ Toegang toegestaan!");
-    showOLED("Toegestaan!", ("Welkom " + naamGebruiker).c_str());
-    openDeur();
-    currentRfidState = RFID_ACCESS_GRANTED;
   } else {
-    Serial.println("❌ Toegang geweigerd!");
+    // Dit blok blijft hetzelfde: de UID is helemaal niet gevonden in de database.
+    Serial.println("❌ Toegang geweigerd! UID onbekend.");
     digitalWrite(RED_PIN, LOW);
     digitalWrite(BUZZER_PIN, HIGH); delay(700); digitalWrite(BUZZER_PIN, LOW);
-    showOLED("Geweigerd", "Geen toegang");
+    showOLED("Geweigerd", "Onbekende kaart");
     digitalWrite(RED_PIN, HIGH);
     currentRfidState = RFID_ACCESS_DENIED;
   }
   http.end();
 
-  // Logboek opslaan
+  // Logboek opslaan (dit werkt nu voor alle scenario's: toegestaan, geweigerd wegens geen autorisatie, en geweigerd wegens onbekende UID)
   Serial.println("Logboek opslaan...");
   static HTTPClient post;
   String logUrl = "https://firestore.googleapis.com/v1/projects/" + String(projectId) + "/databases/(default)/documents/" + String(collLog) + "?key=" + firebaseApiKey;
@@ -268,18 +291,15 @@ void controleerUID(String uid) {
   logDoc["fields"]["UID"]["stringValue"] = uid;
   logDoc["fields"]["Gebruiker"]["stringValue"] = naamGebruiker;
   logDoc["fields"]["Resultaat"]["stringValue"] = resultaat;
-  logDoc["fields"]["Locatie"]["stringValue"] = "Kantoor";
+  logDoc["fields"]["Locatie"]["stringValue"] = AFDELING_NAAM; // Log altijd de locatie van deze ESP
   String logBody;
   serializeJson(logDoc, logBody);
 
-  Serial.print("Logboek payload: "); Serial.println(logBody);
-
   int postResponseCode = post.POST(logBody);
-  Serial.print("HTTP POST Response code voor logboek: "); Serial.println(postResponseCode);
   if (postResponseCode == HTTP_CODE_OK) {
     Serial.println("✅ Logboek succesvol opgeslagen.");
   } else {
-    Serial.printf("❌ Fout bij logboek opslaan (%d): %s\n", postResponseCode, http.errorToString(postResponseCode).c_str());
+    Serial.printf("❌ Fout bij logboek opslaan (%d)\n", postResponseCode);
   }
   post.end();
 }
@@ -292,7 +312,7 @@ void setup() {
   pinMode(RED_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
-  pinMode(DOOR_LED_PIN, OUTPUT); // <-- CORRECTIE: Deze pin moet nu ook ingesteld worden
+  pinMode(DOOR_LED_PIN, OUTPUT);
 
   digitalWrite(RED_PIN, HIGH);
   digitalWrite(GREEN_PIN, HIGH);
