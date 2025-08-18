@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title.replace('_', ' ') }} - Beheer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>Data voor: {{ page_title.replace('_', ' ') }}</h1>
+            <a href="{{ url_for('logout') }}" class="btn-delete">Uitloggen</a>
+        </div>
+        <p><a href="/">â† Terug naar Dashboard</a></p>
+        
+        <div class="card">
+            <!-- Tabel sectie blijft ongewijzigd -->
+            {% if data %}
+                <table>
+                    <thead>
+                        <tr>
+                            {% for header in headers %}<th>{{ header.replace('_', ' ') }}</th>{% endfor %}
+                            {% if page_title != 'toegangslogboeken' %}<th>Acties</th>{% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in data %}
+                            <tr>
+                                {% for header in headers %}<td>
+                                    {% if item.get(header) is sequence and not item.get(header) is string %}
+                                        <ul>{% for sub_item in item.get(header, []) %}<li>{{ sub_item }}</li>{% endfor %}</ul>
+                                    {% else %}
+                                        {{ item.get(header, '') }}
+                                    {% endif %}
+                                </td>{% endfor %}
+                                {% if page_title != 'toegangslogboeken' %}
+                                    <td>
+                                        <form action="{{ url_for('delete_document', collection_name=page_title, doc_id=item.id) }}" method="POST" onsubmit="return confirm('Weet u zeker dat u dit item permanent wilt verwijderen?');">
+                                            <button type="submit" class="btn-delete">Verwijderen</button>
+                                        </form>
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Geen data gevonden in de collectie '{{ page_title }}'.</p>
+            {% endif %}
+        </div>
+        <hr>
+
+        <!-- Formulieren sectie blijft ongewijzigd -->
+        {% if page_title == 'Personeelsinformatie' %}
+            <div class="card">
+                <h2>Nieuw Personeel Toevoegen</h2>
+                <form action="{{ url_for('add_personeel') }}" method="POST">
+                    <!-- ... alle input velden ... -->
+                    <label for="voornaam">Voornaam:</label><input type="text" id="voornaam" name="voornaam" required>
+                    <label for="achternaam">Achternaam:</label><input type="text" id="achternaam" name="achternaam" required>
+                    <label for="afdeling">Afdeling:</label><input type="text" id="afdeling" name="afdeling">
+                    <label for="functie">Functie:</label><input type="text" id="functie" name="functie">
+                    <label for="email">Email:</label><input type="email" id="email" name="email">
+                    <label for="telefoon">Telefoon:</label><input type="tel" id="telefoon" name="telefoon">
+                    <label for="adres">Adres:</label><input type="text" id="adres" name="adres">
+                    <button type="submit">Opslaan</button>
+                </form>
+            </div>
+        {% endif %}
+        {% if page_title == 'deurStatus' %}
+            <div class="card">
+                <h2>Nieuwe Deur Toevoegen</h2>
+                <form action="{{ url_for('add_deur') }}" method="POST">
+                    <label for="deur_naam">Naam van de nieuwe deur:</label>
+                    <input type="text" id="deur_naam" name="deur_naam" required>
+                    <button type="submit">Toevoegen</button>
+                </form>
+            </div>
+        {% endif %}
+        {% if page_title == 'geautoriseerdPersoneel' %}
+            <div class="card">
+                <h2>Nieuwe Autorisatie Toevoegen</h2>
+                <form action="{{ url_for('add_autorisatie') }}" method="POST">
+                    <!-- ... de rest van het autorisatie formulier ... -->
+                    <label for="personeel_id">Kies Personeel:</label>
+                    <select id="personeel_id" name="personeel_id" required>
+                        <option value="">-- Selecteer een persoon --</option>
+                        {% for person in personnel_list %}<option value="{{ person.id }}">{{ person.voornaam }} {{ person.achternaam }}</option>{% endfor %}
+                    </select>
+                    <label for="uid">RFID Kaart UID (handmatig invullen):</label>
+                    <input type="text" id="uid" name="uid" required>
+                    <label>Geef toegang tot (vink aan):</label>
+                    <div class="checkbox-group">
+                        {% for door in door_list %}<label><input type="checkbox" name="toegang_tot" value="{{ door.id }}"> {{ door.id }}</label>{% endfor %}
+                    </div>
+                    <button type="submit" style="margin-top: 15px;">Autorisatie Opslaan</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>```
+
