@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Slim Toegangssysteem</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>Beheer Dashboard</h1>
+            <a href="{{ url_for('logout') }}" class="btn-delete">Uitloggen</a>
+        </div>
+        <p>Welkom, <strong>{{ user_name }}</strong>! Selecteer hieronder een module om de gegevens te bekijken en te beheren.</p>
+        
+        <nav class="dashboard-nav">
+            <ul>
+                <li><a href="{{ url_for('show_data', page_name='Personeelsinformatie') }}">Personeelsinformatie</a></li>
+                <li><a href="{{ url_for('show_data', page_name='geautoriseerdPersoneel') }}">Autorisaties Beheren</a></li>
+                <li><a href="{{ url_for('show_data', page_name='deurStatus') }}">Deurstatussen</a></li>
+                <li><a href="{{ url_for('show_data', page_name='toegangslogboeken') }}">Toegangslogboeken</a></li>
+            </ul>
+        </nav>
+    </div>
+</body>
+</html>
