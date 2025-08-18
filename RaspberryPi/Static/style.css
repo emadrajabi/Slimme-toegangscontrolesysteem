@@ -1,0 +1,207 @@
+/* static/style.css - VOLLEDIGE EN OPGESCHOONDE VERSIE */
+
+/* --- Globale Stijlen & Variabelen --- */
+:root {
+    --primary-color: #007bff;
+    --primary-hover: #0056b3;
+    --danger-color: #dc3545;
+    --danger-hover: #c82333;
+    --background-color: #f8f9fa;
+    --text-color: #333;
+    --card-background: #ffffff;
+    --border-color: #dee2e6;
+    --shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+h1, h2 {
+    color: var(--text-color);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+
+a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 40px 0;
+}
+
+/* --- Kaart Stijl (voor tabellen en formulieren) --- */
+.card {
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 25px;
+    margin-bottom: 30px;
+    overflow-x: auto; /* Zorgt voor scrollen op kleine schermen */
+}
+
+/* --- Tabel Stijlen --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid var(--border-color);
+    text-align: left;
+    padding: 14px;
+    vertical-align: top;
+}
+
+th {
+    background-color: #f2f2f2;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+tr:nth-child(even) {
+    background-color: #fdfdfd;
+}
+
+td ul {
+    padding-left: 20px;
+    margin: 0;
+}
+
+/* --- Formulier Stijlen --- */
+form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    box-sizing: border-box; /* Zorgt dat padding de breedte niet beÃ¯nvloedt */
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.checkbox-group {
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.checkbox-group label {
+    display: inline-block;
+    margin-right: 20px;
+    font-weight: normal;
+}
+
+/* --- Knop Stijlen --- */
+button, .btn {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.2s;
+}
+
+button:hover, .btn:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-delete {
+    background-color: var(--danger-color);
+    padding: 5px 10px;
+    font-size: 0.9em;
+}
+
+.btn-delete:hover {
+    background-color: var(--danger-hover);
+}
+
+
+/* --- Home Pagina (Dashboard) Specifieke Stijlen --- */
+.dashboard-nav ul {
+    list-style-type: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.dashboard-nav a {
+    display: block;
+    background-color: var(--card-background);
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    font-size: 1.2em;
+    font-weight: 500;
+    text-align: center;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.dashboard-nav a:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    text-decoration: none;
+}
+
+/* --- Login Pagina Specifieke Stijlen --- */
+.oauth-btn {
+    display: inline-block;
+    padding: 12px 25px;
+    background-color: #000000;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background 0.3s;
+    font-weight: bold;
+}
+
+.oauth-btn:hover {
+    background-color: #333333;
+}
