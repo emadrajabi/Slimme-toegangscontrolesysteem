@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Slim Toegangssysteem</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="card" style="max-width: 400px; margin: 50px auto; text-align: center;">
+            <h2>Inloggen Vereist</h2>
+            <p>Log in met uw Notion account om toegang te krijgen tot het beheer dashboard.</p>
+            <a href="{{ auth_url }}" class="oauth-btn" style="background-color: #000; color: #fff;">
+                Login met Notion
+            </a>
+        </div>
+    </div>
+</body>
+</html>
