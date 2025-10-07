@@ -1,4 +1,4 @@
-# Afstudeerproject: Slim Toegangssysteem
+# Smart Access System 
 
 Dit is de centrale repository voor het Slim Toegangssysteem. Het project bevat zowel de firmware voor de ESP32-microcontroller als de backend webapplicatie die op een Raspberry Pi draait.
 
